@@ -1,26 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>動画視聴チェック</title>
     <style>
-        body { background-color: #1a1a1a; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        #player { width: 100%; max-width: 800px; aspect-ratio: 16 / 9; }
+        /* 画面全体を黒くし、スクロールを消す */
+        body, html { 
+            background-color: #000; 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+
+        /* 動画の外枠：画面の95%まで広げる */
+        #player-container {
+            width: 95vw;    /* 画面横幅の95% */
+            max-width: 1200px; /* PCでも大きすぎない限界値 */
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        #player {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
     </style>
 </head>
 <body>
-    <div id="player"></div>
+    <div id="player-container">
+        <div id="player"></div>
+    </div>
+
     <script>
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         const firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // ★ここを自分の設定に書き換えてください！
         const videoId = 'RYSlVq7I3sg'; 
         const webhookUrl = 'https://hook.eu1.make.com/4bygxekn2j89hd3o0nfxby1o9moc4slm';
 
-        // URLから user=名前 を取得する設定
         const urlParams = new URLSearchParams(window.location.search);
         const userName = urlParams.get('user') || '不明なユーザー';
 
@@ -28,6 +54,10 @@
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 videoId: videoId,
+                playerVars: {
+                    'rel': 0,        // 関連動画を表示しない
+                    'modestbranding': 1 // YouTubeロゴを控えめにする
+                },
                 events: { 'onStateChange': onPlayerStateChange }
             });
         }
