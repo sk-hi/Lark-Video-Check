@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ウェビナー視聴ページ</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f4f4f4; flex-direction: column; }
+        #player { max-width: 100%; border: 2px solid #3370ff; border-radius: 8px; }
+        .status { margin-top: 20px; font-family: sans-serif; color: #333; }
+    </style>
+</head>
+<body>
+    <div id="player"></div>
+    <div class="status" id="message">動画を最後まで視聴してください</div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        var player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '360',
+                width: '640',
+                videoId: 'ywDBPOyPXfw', // 熊谷さんの動画ID
+                playerVars: { 'rel': 0, 'modestbranding': 1 },
+                events: { 'onStateChange': onPlayerStateChange }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            // 再生終了（0）を検知
+            if (event.data == YT.PlayerState.ENDED) {
+                document.getElementById('message').innerText = "視聴完了！Larkを更新中...";
+                
+                // 【重要】ここにMakeのWebhook URLを貼り付けてください
+                const webhookUrl = 'ここにMakeで取得したURLを貼る';
+
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // セキュリティエラー回避用
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        event: "webinar_completed",
+                        user: "kuma_shun" // テスト用。本来はLarkから動的に取れます
+                    })
+                }).then(() => {
+                    alert("視聴完了が記録されました。次の工程へお進みください。");
+                    document.getElementById('message').innerText = "完了報告済み";
+                });
+            }
+        }
+    </script>
+</body>
+</html>
