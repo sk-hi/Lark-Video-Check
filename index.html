@@ -3,26 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>テストウェビナーチェック</title>
+    <title>動画視聴チェック</title>
     <style>
         body, html { 
-            background-color: #000; 
-            margin: 0; padding: 0; 
-            width: 100%; height: 100%; 
-            overflow: hidden; 
+            background-color: #000; margin: 0; padding: 0; 
+            width: 100%; height: 100%; overflow: hidden; 
             display: flex; justify-content: center; align-items: center; 
         }
         #player-container {
-            width: 95vw;
-            max-width: 1200px;
-            aspect-ratio: 16 / 9;
+            position: relative;
+            width: 95vw; max-width: 1200px; aspect-ratio: 16 / 9;
         }
         #player { width: 100%; height: 100%; border: none; }
+        
+        /* 透明な再生ボタン（動画の上に被せる） */
+        #play-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.1); /* ほんの少し暗くする */
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 10;
+        }
+        #play-button {
+            width: 80px; height: 80px; background: red; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-size: 40px; box-shadow: 0 0 20px rgba(255,0,0,0.5);
+        }
     </style>
 </head>
 <body>
-    <div id="player-container">
+    <div id="player-container" id="fullscreen-target">
         <div id="player"></div>
+        <div id="play-overlay" onclick="startVideoAndFullscreen()">
+            <div id="play-button">▶</div>
+        </div>
     </div>
 
     <script>
@@ -41,26 +54,33 @@
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 videoId: videoId,
-                playerVars: { 'rel': 0, 'modestbranding': 1, 'playsinline': 0 },
+                playerVars: { 'rel': 0, 'modestbranding': 1, 'playsinline': 1 },
                 events: { 'onStateChange': onPlayerStateChange }
             });
         }
 
-        function onPlayerStateChange(event) {
-            // 動画が再生開始（PLAYING）されたら全画面にする
-            if (event.data == YT.PlayerState.PLAYING) {
-                const iframe = document.getElementById('player');
-                if (iframe.requestFullscreen) {
-                    iframe.requestFullscreen();
-                } else if (iframe.webkitRequestFullscreen) { /* Safari用 */
-                    iframe.webkitRequestFullscreen();
-                } else if (iframe.msRequestFullscreen) { /* IE11用 */
-                    iframe.msRequestFullscreen();
-                }
+        // ★ボタンを押した瞬間に「全画面」と「再生」を同時に実行
+        function startVideoAndFullscreen() {
+            const container = document.getElementById('player-container');
+            const overlay = document.getElementById('play-overlay');
+
+            // 全画面リクエスト
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
             }
 
-            // 動画が終了（ENDED）したら全画面を解除してデータを送る
+            // 動画再生開始
+            player.playVideo();
+            
+            // ボタンを消す
+            overlay.style.display = 'none';
+        }
+
+        function onPlayerStateChange(event) {
             if (event.data == YT.PlayerState.ENDED) {
+                // 終了したら全画面解除
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
                 } else if (document.webkitExitFullscreen) {
