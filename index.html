@@ -1,51 +1,46 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>ウェビナー視聴ページ</title>
+    <title>動画視聴チェック</title>
     <style>
-        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f4f4f4; flex-direction: column; }
-        #player { max-width: 100%; border: 2px solid #3370ff; border-radius: 8px; }
-        .status { margin-top: 20px; font-family: sans-serif; color: #333; }
+        body { background-color: #1a1a1a; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #player { width: 100%; max-width: 800px; aspect-ratio: 16 / 9; }
     </style>
 </head>
 <body>
     <div id="player"></div>
-    <div class="status" id="message">動画を最後まで視聴してください</div>
-
-    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        var player;
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // ★ここを自分の設定に書き換えてください！
+        const videoId = 'ywDBPOyPXfw'; 
+        const webhookUrl = 'https://hook.eu1.make.com/4bygxekn2j89hd3o0nfxby1o9moc4slm';
+
+        // URLから user=名前 を取得する設定
+        const urlParams = new URLSearchParams(window.location.search);
+        const userName = urlParams.get('user') || '不明なユーザー';
+
+        let player;
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
-                height: '360',
-                width: '640',
-                videoId: 'ywDBPOyPXfw', // 熊谷さんの動画ID
-                playerVars: { 'rel': 0, 'modestbranding': 1 },
+                videoId: videoId,
                 events: { 'onStateChange': onPlayerStateChange }
             });
         }
 
         function onPlayerStateChange(event) {
-            // 再生終了（0）を検知
             if (event.data == YT.PlayerState.ENDED) {
-                document.getElementById('message').innerText = "視聴完了！Larkを更新中...";
-                
-                // 【重要】ここにMakeのWebhook URLを貼り付けてください
-                const webhookUrl = 'https://hook.eu1.make.com/4bygxekn2j89hd3o0nfxby1o9moc4slm';
-
                 fetch(webhookUrl, {
                     method: 'POST',
-                    mode: 'no-cors', // セキュリティエラー回避用
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        event: "webinar_completed",
-                        user: "kuma_shun" // テスト用。本来はLarkから動的に取れます
-                    })
-                }).then(() => {
-                    alert("視聴完了が記録されました。次の工程へお進みください。");
-                    document.getElementById('message').innerText = "完了報告済み";
-                });
+                    body: JSON.stringify({ user: userName, event: 'completed' })
+                })
+                .then(() => alert('視聴完了しました！データを記録しました。'))
+                .catch(() => alert('通信エラーが発生しました。'));
             }
         }
     </script>
